@@ -1,0 +1,292 @@
+import { useState, useRef, useEffect } from "react";
+
+const sections = [
+  {
+    id: "setup",
+    icon: "🏗️",
+    title: "セットアップ",
+    color: "#3266ad",
+    light: "#e6f1fb",
+    content: [
+      { heading: "水槽・イケスの選定", body: "用途に応じてFRP製・アクリル製・コンクリート製から選択。鮮魚店の店頭用は視認性の高いアクリル製が主流。容量は魚の収容量の3〜5倍の水量を確保するのが基本。過密飼育は水質悪化・酸欠・ストレスによる斃死の原因となります。" },
+      { heading: "ろ過システムの構成", body: "物理ろ過（スポンジ・砂利）→生物ろ過（バクテリア定着ろ材）→化学ろ過（活性炭）の3段構成が基本。海水魚・甲殻類にはプロテインスキマーの追加が効果的。循環ポンプの流量は水量の3〜5倍/時間を目安に選定。" },
+      { heading: "エアレーション・酸素供給", body: "活魚の生存には十分な溶存酸素が不可欠。エアポンプ＋エアストーンの分散配置が基本。水温が高い夏場は溶存酸素量が低下するため、液体酸素や酸素発生装置の導入も検討。酸素濃度は6mg/L以上を維持。" },
+      { heading: "海水・淡水の使い分け", body: "海水魚・甲殻類（カニ・エビ・貝）には人工海水か天然海水を使用。比重は1.020〜1.025が目安（比重計で毎日確認）。淡水魚（コイ・ニジマス等）は脱塩素処理した真水を使用。混合飼育は厳禁。" },
+      { heading: "温度管理設備", body: "魚種に適した水温を一定に保つことが鮮度・生存率に直結。チラー（冷却装置）とヒーターの組み合わせで年間管理。夏は10〜15℃、冬は8〜12℃程度が多くの活魚に適切。温度変化は1日1℃以内に抑える。" },
+      { heading: "初期立ち上げ手順", body: "①水槽・配管の洗浄（塩素系洗剤不可）→②海水／淡水の作成・水温調整→③ろ過装置・エアの稼働→④バクテリア剤投入→⑤1週間以上のエージング→⑥少量の魚で試運転→⑦水質確認後に本格導入。" },
+    ]
+  },
+  {
+    id: "daily",
+    icon: "📋",
+    title: "日々の管理・点検",
+    color: "#1d9e75",
+    light: "#e1f5ee",
+    content: [
+      { heading: "朝一番の点検項目", body: "①斃死魚・弱った魚の確認と即除去 ②水温チェック（温度計・チラー設定値） ③エアレーション・ポンプの稼働確認 ④水の濁り・臭いの確認 ⑤比重確認（海水の場合）。これらを毎朝記録することが重要。" },
+      { heading: "斃死魚の処理", body: "死魚は発見次第即時除去。放置すると水質が急激に悪化し、他の魚への感染リスクも高まります。除去した魚は廃棄物として適切に処理し、手はよく洗浄・消毒。除去後は水質測定を実施。" },
+      { heading: "給餌管理（長期飼育の場合）", body: "店頭での短期保管（数日）は基本的に絶食管理。長期飼育（養殖・漁港イケス）では魚種に応じた餌を1日1〜2回。食べ残しは即除去。給餌量の目安は体重の1〜3%。空腹すぎても過食でも水質悪化の原因に。" },
+      { heading: "水位・蒸発補充", body: "夏場は蒸発により1日で数cmの水位低下が起きることも。海水の場合は蒸発分を真水で補充（塩分濃度が上がるため）。補充水は水温を合わせてから投入。急激な水位変化は魚にストレスを与えます。" },
+      { heading: "記録・台帳管理", body: "水温・比重・pH・アンモニア・入荷日・魚種・尾数・斃死数を毎日記録。トラブル発生時の原因究明や、衛生検査・行政への報告にも必要。デジタル管理が望ましいが紙台帳でも可。" },
+      { heading: "夜間・閉店後の管理", body: "閉店後もエアレーション・ろ過・温度管理は24時間稼働が必須。予備ポンプ・タイマー・停電対策（自家発電や電池式エアポンプ）も準備。夏の夜間は水温上昇リスクが高く、チラー設定値の見直しを。" },
+    ]
+  },
+  {
+    id: "water",
+    icon: "🧪",
+    title: "水質管理・メンテナンス",
+    color: "#7f77dd",
+    light: "#eeedfe",
+    content: [
+      { heading: "主要水質パラメーターと基準値", body: "【海水】水温10〜18℃／比重1.020〜1.025／pH7.8〜8.3／アンモニア0mg/L／亜硝酸0mg/L／溶存酸素6mg/L以上。【淡水】水温8〜15℃／pH6.5〜7.5／アンモニア0mg/L。いずれも超過したら即換水。" },
+      { heading: "換水の頻度と方法", body: "商業用活魚水槽は週1〜2回、水量の20〜30%を換水が基本。過密・夏場は毎日換水も必要。換水水は必ず同温・同比重に調整してから投入。急激な換水は魚にショックを与えます。" },
+      { heading: "ろ材・フィルターの清掃", body: "物理ろ材（スポンジ）は週1回、飼育水で軽く洗う（水道水不可・バクテリアが死滅）。生物ろ材は月1回程度、汚れが目立つ部分のみ。全部同時清掃は厳禁。ポンプのインペラーは月1回点検・清掃。" },
+      { heading: "比重管理（海水専用）", body: "比重は1.020〜1.025の範囲で管理。高温・蒸発で上昇したら真水を補充。低下したら人工海水素で補正。比重の急変は浸透圧ショックの原因。0.001以上/日の変化は危険。比重計は定期的にキャリブレーション。" },
+      { heading: "プロテインスキマーの管理", body: "海水水槽では有機物を泡で除去するプロテインスキマーが有効。集積カップは週2〜3回清掃。汚れが多い場合は毎日清掃。エアストーンは月1回交換。稼働音・泡立ちの変化は故障のサイン。" },
+      { heading: "水槽内の清掃・殺菌", body: "壁面のコケ・汚れはスポンジで定期清掃。底部の汚泥はサイフォンで吸い出し。UV殺菌灯は水中の細菌・ウイルスを低減するため、食品衛生上有効。ランプは6ヶ月〜1年で交換（可視光が出ていても紫外線出力は低下）。" },
+    ]
+  },
+  {
+    id: "species",
+    icon: "🐟",
+    title: "魚種別管理ポイント",
+    color: "#d85a30",
+    light: "#faece7",
+    content: [
+      { heading: "タイ類（マダイ・チダイ）", body: "適水温10〜20℃。ストレスに比較的強く活魚として流通しやすい。過密に注意（縄張り争い・ひれの損傷）。弱酸性・中性水を好む。輸送後は塩分濃度を徐々に合わせる順化が必要。" },
+      { heading: "ヒラメ・カレイ", body: "底生魚のため水槽底面積が重要。適水温8〜18℃。砂利・砂底が落ち着く。酸素消費量が少なく比較的飼育しやすい。逃げ出しやすいため水槽のふたは必須。皮膚が傷つくとすぐ病気につながるため取り扱いは丁重に。" },
+      { heading: "アワビ・サザエ（貝類）", body: "溶存酸素への要求が高い。水温10〜18℃。海藻（昆布・ワカメ）を餌として与える。積み重ねると窒息リスクがあるため薄く並べる。斃死は素早く悪臭を発するため即除去。比重変化に敏感。" },
+      { heading: "カニ・エビ（甲殻類）", body: "カニは共食い防止のため個別か隔離が理想。ズワイガニは低水温（5〜10℃）が必要。エビ類は水質変化に敏感でアンモニアにも弱い。脱皮直後は非常に弱いため隔離推奨。酸欠でまず最初に影響が出る。" },
+      { heading: "フグ類", body: "他の魚のひれをかじる習性があるため、単独か同種のみで管理。水温15〜22℃。怒ると膨らんで水槽の角に詰まることがあるため取り扱いは慎重に。内臓・皮膚に毒を持つため、調理資格（ふぐ調理師）を持つ人のみが取り扱う。" },
+      { heading: "ウナギ・アナゴ", body: "脱走能力が非常に高いため水槽のふた・配管口の完全な封鎖が必須。適水温20〜28℃（ウナギ）。隠れ場所（パイプ・筒）を設置するとストレス軽減。アンモニアを多く排出するため換水頻度を上げる。" },
+    ]
+  },
+  {
+    id: "trouble",
+    icon: "🔍",
+    title: "トラブルシューティング",
+    color: "#ba7517",
+    light: "#faeeda",
+    content: [
+      { heading: "大量斃死・急死", body: "原因①停電・ポンプ故障による酸欠 ②水温の急変 ③アンモニア・亜硝酸の急上昇 ④薬品・洗剤の混入。対処：原因を特定しながら即換水30〜50%・エアレーション強化。生存魚を別水槽に移し水質測定を実施。" },
+      { heading: "白点病・寄生虫", body: "体表に白い点や白濁が見られたら白点病を疑う。水温を22〜25℃に上げると寄生虫のサイクルが早まる。発症魚は即隔離。淡水魚は塩水浴（0.5%食塩水）が有効。海水魚は低比重浴（1.010〜1.012）や薬浴。店頭活魚水槽では薬品使用に注意（食品衛生法に抵触する可能性）。" },
+      { heading: "水の白濁・臭い", body: "白濁：バクテリアバランスの乱れ・有機物過多。対処：換水・ろ材確認・過密解消。黄褐色の濁り：有機物・腐植酸。緑濁り：藻類繁殖（光を当てすぎている）。強い臭いは水質悪化のサイン。即換水と原因除去。" },
+      { heading: "比重・pH急変（海水）", body: "蒸発による比重上昇→真水を少量ずつ補充（一度に0.001以上変えない）。雨水混入による比重低下→人工海水で補正。pH低下→炭酸水素ナトリウム（重曹）少量添加で緩やかに補正。いずれも急変は厳禁。" },
+      { heading: "停電・機器故障への対応", body: "停電時：電池式エアポンプを即稼働・水温確認・魚の行動観察。長時間停電の場合は酸素ボンベを使用。ポンプ故障：予備品と即交換できるよう常備。チラー故障：夏場は氷袋（直接投入不可→ビニール袋）で応急対処。" },
+      { heading: "魚の行動異常サイン", body: "①水面に浮く・鼻上げ→酸欠 ②底に沈んで動かない→低水温・体調不良 ③狂ったように泳ぐ→水質急変・薬品混入 ④エラを激しく動かす→酸欠・エラ病 ⑤体色が白くなる→ストレス・病気。サインを見逃さず早期対処が重要。" },
+    ]
+  },
+  {
+    id: "hygiene",
+    icon: "🛡️",
+    title: "衛生・食品安全管理",
+    color: "#0f6e56",
+    light: "#e1f5ee",
+    content: [
+      { heading: "食品衛生法における活魚管理", body: "食品衛生法上、活魚・生きた貝類は「生鮮食品」として扱われます。水槽水の衛生管理・換水記録・温度管理記録の保存が求められます。営業許可（魚介類販売業）の取得と定期的な行政検査への対応が必要。" },
+      { heading: "水質の衛生基準", body: "飲食店・販売店の活魚水槽は一般細菌数・大腸菌群数の基準を満たす必要があります。海水は清潔な海域の天然海水か人工海水を使用。生活排水や農業排水が混入した海水の使用は禁止。定期的な水質検査の実施推奨。" },
+      { heading: "薬品・添加物の使用制限", body: "活魚水槽への抗生物質・禁止薬品の使用は食品衛生法違反。病気予防・治療には承認された動物用医薬品のみ使用可。魚が死亡・出荷停止になるまでの休薬期間を必ず守る。薬品の使用記録は2年以上保存。" },
+      { heading: "手指衛生・作業管理", body: "水槽作業前後の手洗い・消毒を徹底。傷がある場合は防水手袋を着用。病魚を触った後は必ず消毒。水槽用の道具（網・バケツ等）は他用途との共用禁止。作業着は清潔なものを着用し、調理エリアへの持ち込み不可。" },
+      { heading: "水槽・器具の消毒方法", body: "日常清掃：飼育水でのすすぎ洗い。定期消毒（魚を移した後）：次亜塩素酸ナトリウム200ppm溶液で10分浸漬→十分なすすぎ。金属製器具は腐食に注意。FRP製水槽は酸性洗剤不可。消毒後は必ず残留塩素を除去してから魚を戻す。" },
+      { heading: "ノロウイルス・食中毒対策", body: "二枚貝（カキ・アサリ等）は特にノロウイルスのリスクあり。生食用と加熱用の区別を明確に管理・表示。貝類の保管水温は10℃以下を維持。従業員の健康管理（下痢・嘔吐がある場合は就業停止）。定期的な食品衛生研修の実施。" },
+    ]
+  }
+];
+
+const SYSTEM_PROMPT = `あなたは活魚水槽・イケス管理の専門家アシスタントです。鮮魚店・飲食店・水産業者向けに、飼育方法・水質管理・衛生管理・トラブル対応について詳しく、実践的な内容を日本語で答えてください。回答は3〜5文程度で具体的な数値・手順を含めてください。`;
+
+const QUICK_QUESTIONS = [
+  "水温が急に上がった時の対処法は？",
+  "アワビが大量に死んだ原因は？",
+  "海水の比重が下がりすぎた場合は？",
+  "活魚水槽の消毒方法を教えて",
+  "フグの飼育で注意することは？",
+  "夏場の水質管理のコツは？",
+];
+
+export default function App() {
+  const [tab, setTab] = useState("learn");
+  const [activeSection, setActiveSection] = useState(sections[0].id);
+  const [openIdx, setOpenIdx] = useState(null);
+  const [messages, setMessages] = useState([
+    { role: "assistant", text: "こんにちは！活魚水槽・イケスの管理について何でもお聞きください。セットアップ・水質管理・衛生管理・魚種別のポイントなど、実践的にお答えします🐟" }
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef(null);
+  const sec = sections.find(s => s.id === activeSection);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+
+  async function send(q) {
+    const text = (q || input).trim();
+    if (!text || loading) return;
+    setInput("");
+    const next = [...messages, { role: "user", text }];
+    setMessages(next);
+    setLoading(true);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: SYSTEM_PROMPT,
+          messages: next.map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.text }))
+        })
+      });
+      const data = await res.json();
+      const ans = data.content?.[0]?.text || "回答を取得できませんでした。";
+      setMessages([...next, { role: "assistant", text: ans }]);
+    } catch {
+      setMessages([...next, { role: "assistant", text: "エラーが発生しました。もう一度お試しください。" }]);
+    }
+    setLoading(false);
+  }
+
+  return (
+    <div style={{ fontFamily: "var(--font-sans)", maxWidth: 700, margin: "0 auto", padding: "1rem 0" }}>
+      <div style={{ marginBottom: "1.25rem" }}>
+        <p style={{ fontSize: 11, color: "var(--color-text-tertiary)", margin: "0 0 2px" }}>プロ向け管理学習アプリ</p>
+        <h1 style={{ fontSize: 22, fontWeight: 500, margin: "0 0 2px", color: "var(--color-text-primary)" }}>活魚水槽・イケス管理</h1>
+        <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: 0 }}>鮮魚店・飲食店・水産業者向け 実践ガイド</p>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: "1.25rem", borderBottom: "0.5px solid var(--color-border-tertiary)", paddingBottom: "0.75rem" }}>
+        {[["learn", "📖 学習ガイド"], ["ai", "💬 AI相談"]].map(([id, label]) => (
+          <button key={id} onClick={() => setTab(id)} style={{
+            padding: "6px 18px", borderRadius: "var(--border-radius-md)",
+            border: tab === id ? "2px solid var(--color-border-info)" : "0.5px solid var(--color-border-tertiary)",
+            background: tab === id ? "var(--color-background-info)" : "transparent",
+            color: tab === id ? "var(--color-text-info)" : "var(--color-text-secondary)",
+            fontSize: 14, fontWeight: tab === id ? 500 : 400, cursor: "pointer"
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {tab === "learn" && (
+        <div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: "1.25rem" }}>
+            {sections.map(s => (
+              <button key={s.id} onClick={() => { setActiveSection(s.id); setOpenIdx(null); }} style={{
+                padding: "5px 12px", borderRadius: "var(--border-radius-md)",
+                border: activeSection === s.id ? `2px solid ${s.color}` : "0.5px solid var(--color-border-tertiary)",
+                background: activeSection === s.id ? s.light : "transparent",
+                color: activeSection === s.id ? s.color : "var(--color-text-secondary)",
+                fontSize: 12, fontWeight: activeSection === s.id ? 500 : 400, cursor: "pointer", whiteSpace: "nowrap"
+              }}>{s.icon} {s.title}</button>
+            ))}
+          </div>
+
+          <div style={{ background: sec.light, borderRadius: "var(--border-radius-lg)", padding: "10px 14px", marginBottom: "1rem", borderLeft: `3px solid ${sec.color}` }}>
+            <p style={{ margin: 0, fontSize: 13, color: sec.color, fontWeight: 500 }}>{sec.icon} {sec.title}</p>
+          </div>
+
+          <div>
+            {sec.content.map((item, i) => (
+              <div key={i} style={{
+                borderRadius: "var(--border-radius-lg)",
+                border: "0.5px solid var(--color-border-tertiary)",
+                marginBottom: 8, overflow: "hidden",
+                background: "var(--color-background-primary)"
+              }}>
+                <button onClick={() => setOpenIdx(openIdx === i ? null : i)} style={{
+                  width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
+                  padding: "13px 16px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left"
+                }}>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: "var(--color-text-primary)", display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: sec.color, flexShrink: 0, display: "inline-block" }}></span>
+                    {item.heading}
+                  </span>
+                  <span style={{ fontSize: 16, color: "var(--color-text-tertiary)", transform: openIdx === i ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0, marginLeft: 8 }}>›</span>
+                </button>
+                {openIdx === i && (
+                  <div style={{ padding: "0 16px 14px 34px", borderTop: "0.5px solid var(--color-border-tertiary)" }}>
+                    <p style={{ fontSize: 14, lineHeight: 1.85, color: "var(--color-text-secondary)", margin: "12px 0 10px" }}>{item.body}</p>
+                    <button onClick={() => { setTab("ai"); setTimeout(() => setInput(`「${item.heading}」について詳しく教えてください。`), 100); }} style={{
+                      fontSize: 12, padding: "4px 12px",
+                      borderRadius: "var(--border-radius-md)",
+                      border: "0.5px solid var(--color-border-secondary)",
+                      background: "transparent", color: "var(--color-text-secondary)", cursor: "pointer"
+                    }}>AIに詳しく聞く ↗</button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab === "ai" && (
+        <div>
+          <div style={{
+            height: 420, overflowY: "auto", padding: "12px",
+            border: "0.5px solid var(--color-border-tertiary)",
+            borderRadius: "var(--border-radius-lg)",
+            background: "var(--color-background-secondary)",
+            marginBottom: 10
+          }}>
+            {messages.map((m, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", marginBottom: 10 }}>
+                {m.role === "assistant" && (
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#1d9e75", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, marginRight: 8, flexShrink: 0, alignSelf: "flex-end" }}>🐟</div>
+                )}
+                <div style={{
+                  maxWidth: "78%", padding: "10px 14px",
+                  borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "4px 14px 14px 14px",
+                  background: m.role === "user" ? "#3266ad" : "var(--color-background-primary)",
+                  color: m.role === "user" ? "#fff" : "var(--color-text-primary)",
+                  fontSize: 14, lineHeight: 1.75,
+                  border: m.role === "assistant" ? "0.5px solid var(--color-border-tertiary)" : "none",
+                  whiteSpace: "pre-wrap"
+                }}>{m.text}</div>
+              </div>
+            ))}
+            {loading && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#1d9e75", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🐟</div>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {[0,1,2].map(i => (
+                    <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: "#1d9e75", animation: `bounce 1s ${i*0.2}s infinite` }} />
+                  ))}
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
+              placeholder="例：カニが弱ってきた時の対処は？"
+              style={{ flex: 1, padding: "10px 14px", fontSize: 14, borderRadius: "var(--border-radius-md)", border: "0.5px solid var(--color-border-secondary)" }}
+            />
+            <button onClick={() => send()} disabled={loading || !input.trim()} style={{
+              padding: "10px 18px", borderRadius: "var(--border-radius-md)",
+              background: loading || !input.trim() ? "var(--color-background-secondary)" : "#3266ad",
+              color: loading || !input.trim() ? "var(--color-text-tertiary)" : "#fff",
+              border: "none", cursor: loading || !input.trim() ? "default" : "pointer",
+              fontSize: 14, fontWeight: 500, whiteSpace: "nowrap"
+            }}>送信</button>
+          </div>
+
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {QUICK_QUESTIONS.map(q => (
+              <button key={q} onClick={() => send(q)} style={{
+                fontSize: 12, padding: "4px 10px",
+                borderRadius: "var(--border-radius-md)",
+                border: "0.5px solid var(--color-border-tertiary)",
+                background: "transparent", color: "var(--color-text-secondary)", cursor: "pointer"
+              }}>{q}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <style>{`@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}`}</style>
+    </div>
+  );
+}
